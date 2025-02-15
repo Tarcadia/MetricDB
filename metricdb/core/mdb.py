@@ -91,10 +91,11 @@ class MetricDB:
                 SELECT mid, time, duration, value 
                 FROM metric_entry 
                 WHERE mid GLOB ? 
-                AND ( time <= ? OR datetime(time, '+' || duration || ' seconds') >= ? )
+                AND datetime(time, '+' || duration || ' seconds') >= ? 
+                AND time <= ? 
                 ORDER BY time
                 """,
-                (pattern, end_time, start_time)
+                (pattern, start_time, end_time)
             )
             return [
                 MetricEntry(
