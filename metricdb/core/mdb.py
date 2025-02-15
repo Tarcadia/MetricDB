@@ -2,7 +2,8 @@
 
 import sqlite3
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
+from datetime import datetime
 from .metric import MetricId, MetricIdPattern, MetricInfo, MetricEntry
 from .time import Time
 
@@ -17,6 +18,7 @@ class MetricDB:
 
     def _init_db(self):
         with sqlite3.connect(self.filename) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS metric_info (
@@ -29,7 +31,7 @@ class MetricDB:
                 CREATE TABLE IF NOT EXISTS metric_entry (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     mid TEXT,
-                    time TEXT,
+                    time DATETIME,
                     duration REAL,
                     value BLOB
                 )
@@ -59,10 +61,11 @@ class MetricDB:
 
     def add_metric_entry(self, id: MetricId, entry: MetricEntry) -> None:
         with sqlite3.connect(self.filename) as conn:
+            entry_time = entry.time.isoformat()
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO metric_entry (mid, time, duration, value) VALUES (?, ?, ?, ?)",
-                (str(id), str(entry.time), entry.duration, entry.value)
+                (str(id), entry_time, entry.duration, entry.value)
             )
             conn.commit()
 
@@ -74,22 +77,26 @@ class MetricDB:
         end_time: Time
     ) -> List[Tuple[MetricId, MetricEntry]]:
         pattern = str(metric_pattern)
+        start_time = start_time.isoformat()
+        end_time = end_time.isoformat()
+
         with sqlite3.connect(self.filename) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT mid, time, duration, value 
                 FROM metric_entry 
                 WHERE mid GLOB ? 
-                AND (
-                    (time BETWEEN ? AND ?) OR
-                    (datetime(time) <= datetime(?) AND 
-                     datetime(time, '+' || duration || ' seconds') >= datetime(?))
+                AND ( time <= ? OR datetime(time, '+' || duration || ' seconds') >= ? )
+                ORDER BY time
                 """,
-                (pattern.replace('**', '*').replace('::', ':'), 
-                 str(start_time), str(end_time),
-                 str(start_time), str(end_time))
+                (pattern, end_time, start_time)
             )
             return [
-                (MetricId(row[0]), MetricEntry(Time(row[1]), row[2], row[3]))
-                for row in cursor.fetchall()
+                MetricEntry(
+                    datetime.fromisoformat(row["time"]),
+                    row["duration"],
+                    row["value"]
+                ) for row in cursor.fetchall()
             ]
+
