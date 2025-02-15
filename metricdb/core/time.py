@@ -51,7 +51,7 @@ class Time(datetime):
         return self.strftime(self.FORMAT)
 
     def __repr__(self):
-        return f"Time({'self'})"
+        return f"Time('{self}')"
 
 
 Time.min = Time("min")
