@@ -3,7 +3,6 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any
 from typing import Any, List
 from fnmatch import fnmatch
 
@@ -37,7 +36,7 @@ class MetricIdPattern(MetricId):
         id_parts = metric_id.keys()
         pattern_path = "/".join(pattern_parts)
         id_path = "/".join(id_parts)
-        return fnmatch.fnmatch(id_path, pattern_path)
+        return fnmatch(id_path, pattern_path)
 
 
 @dataclass
