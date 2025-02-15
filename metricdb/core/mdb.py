@@ -56,7 +56,11 @@ class MetricDB:
                 "SELECT name, description FROM metric_info WHERE id = ?",
                 (str(id),)
             )
-            return cursor.fetchone() or MetricInfo(id)
+            _result = cursor.fetchone()
+            if _result is None:
+                return MetricInfo(id)
+            else:
+                return MetricInfo(id, *_result)
 
 
     def add_metric_entry(self, id: MetricId, entry: MetricEntry) -> None:
