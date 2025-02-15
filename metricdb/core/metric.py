@@ -4,6 +4,8 @@
 
 from dataclasses import dataclass, field
 from typing import Any
+from typing import Any, List
+from fnmatch import fnmatch
 
 from .identifier import Identifier, split_identifier
 from .time import Time
@@ -18,7 +20,7 @@ class MetricId(str):
         _keys = [id for k in keys for id in split_identifier(str(k))]
         return str.__new__(cls, cls.SEPARATOR.join(_keys))
     
-    def keys(self):
+    def keys(self) -> List[str]:
         return self.split(self.SEPARATOR)
 
 
@@ -30,6 +32,12 @@ class MetricIdPattern(MetricId):
         _keys = [id for k in keys for id in split_identifier(str(k), charset=(Identifier.CHARSET + "*"))]
         return str.__new__(cls, cls.SEPARATOR.join(_keys))
 
+    def match(self, metric_id: MetricId) -> bool:
+        pattern_parts = self.keys()
+        id_parts = metric_id.keys()
+        pattern_path = "/".join(pattern_parts)
+        id_path = "/".join(id_parts)
+        return fnmatch.fnmatch(id_path, pattern_path)
 
 
 @dataclass
