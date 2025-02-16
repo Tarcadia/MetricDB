@@ -6,10 +6,6 @@ from datetime import datetime
 
 
 class Time(datetime):
-
-    FORMAT = "%Y%m%d%H%M%S%f"
-    ACCURACY = 20
-
     def __new__(cls, time: bytes | datetime | str | int | None = None):
         if isinstance(time, Time):
             return time
@@ -28,9 +24,10 @@ class Time(datetime):
             elif lower_time == "now":
                 dt = datetime.now()
             else:
-                if isinstance(time, str) and len(time) < Time.ACCURACY:
-                    time += "0" * (Time.ACCURACY - len(time))
-                dt = datetime.strptime(time, cls.FORMAT)
+                try:
+                    dt = datetime.fromisoformat(time)
+                except ValueError:
+                    raise ValueError(f"Invalid ISO8601 format: {time}")
         elif time is None:
             dt = datetime.now()
         else:
@@ -48,7 +45,7 @@ class Time(datetime):
             return "min"
         elif self == datetime.max:
             return "max"
-        return self.strftime(self.FORMAT)
+        return self.isoformat()
 
     def __repr__(self):
         return f"Time('{self}')"
