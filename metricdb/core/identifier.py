@@ -13,6 +13,17 @@ class Identifier(str):
         return str.__new__(cls, _format(id, charset=cls.CHARSET))
 
 
+
+class TestId(Identifier):
+    CHARSET = 'abcdefghijklmnopqrstuvwxyz0123456789_-.'
+
+
+
+class DutId(Identifier):
+    CHARSET = 'abcdefghijklmnopqrstuvwxyz0123456789_-.'
+
+
+
 def _format(id, charset = Identifier.CHARSET):
     _id = str(id).lower()
     _id = ''.join([c for c in _id if c in charset])
