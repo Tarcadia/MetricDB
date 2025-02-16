@@ -16,7 +16,7 @@ def _dut2strset(dut: Union[DutId, Set[DutId]]) -> Set[str]:
         dut = set()
     if isinstance(dut, DutId):
         dut = {dut}
-    return {f"#{_d.replace("_", "\\_")}#" for _d in dut}
+    return {f"#{_d}#" for _d in dut}
 
 
 
@@ -139,14 +139,14 @@ class MetricDB:
         
         for _d in _dut2strset(dut):
             conditions.append("dut LIKE ? ESCAPE '\\'")
-            params.append(f"%{_d}%")
+            params.append(f"%{_d.replace("_", "\\_")}%")
         
         if not start_time is None:
-            conditions.append("datetime(time, '+' || duration || ' seconds') >= ?")
+            conditions.append("datetime(time, '+' || duration || ' seconds') >= datetime(?)")
             params.append(start_time.isoformat())
         
         if not end_time is None:
-            conditions.append("time <= ?")
+            conditions.append("datetime(time) <= datetime(?)")
             params.append(end_time.isoformat())
         
         query = f"""
