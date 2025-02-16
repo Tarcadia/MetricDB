@@ -2,10 +2,21 @@
 
 import sqlite3
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Set, Union
 from datetime import datetime
-from .metric import MetricKey, MetricInfo, MetricEntry
+
+from .identifier import TestId, DutId
 from .time import Time
+from .metric import MetricKey, MetricInfo, MetricEntry
+
+
+
+def _dut2strset(dut: Union[DutId, Set[DutId]]) -> Set[str]:
+    if dut is None:
+        dut = set()
+    if isinstance(dut, DutId):
+        dut = {dut}
+    return {f"#{_d.replace("_", "\\_")}#" for _d in dut}
 
 
 
@@ -30,6 +41,8 @@ class MetricDB:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS metric_entry (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    test TEXT,
+                    dut TEXT,
                     key TEXT,
                     time DATETIME,
                     duration REAL,
@@ -39,7 +52,19 @@ class MetricDB:
             conn.commit()
 
 
-    def update_metric_info(self, info: MetricInfo) -> None:
+    def list_metric_info(
+        self
+    ) -> List[MetricInfo]:
+        with sqlite3.connect(self.filename) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, name, description FROM metric_info")
+            return [MetricInfo(*row) for row in cursor.fetchall()]
+
+
+    def update_metric_info(
+        self,
+        info: MetricInfo
+    ) -> None:
         with sqlite3.connect(self.filename) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -49,7 +74,10 @@ class MetricDB:
             conn.commit()
 
 
-    def query_metric_info(self, key: MetricKey) -> MetricInfo:
+    def query_metric_info(
+        self,
+        key: MetricKey
+    ) -> MetricInfo:
         with sqlite3.connect(self.filename) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -63,13 +91,27 @@ class MetricDB:
                 return MetricInfo(key, *_result)
 
 
-    def add_metric_entry(self, key: MetricKey, entry: MetricEntry) -> None:
+    def add_metric_entry(
+        self,
+        key: MetricKey,
+        entry: MetricEntry,
+        test: TestId = None,
+        dut: Union[DutId, Set[DutId]] = None,
+    ) -> None:
+        if test is None:
+            test = TestId("")
+        if dut is None:
+            dut = set()
+        
         with sqlite3.connect(self.filename) as conn:
-            entry_time = entry.time.isoformat()
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO metric_entry (key, time, duration, value) VALUES (?, ?, ?, ?)",
-                (str(key), entry_time, entry.duration, entry.value)
+                "INSERT OR IGNORE INTO metric_info (key, name, description) VALUES (?, ?, ?)",
+                (str(key), "", "")
+            )
+            cursor.execute(
+                "INSERT INTO metric_entry (test, dut, key, time, duration, value) VALUES (?, ?, ?, ?, ?, ?)",
+                (str(test), ",".join(_dut2strset(dut)), str(key), entry.time.isoformat(), entry.duration, entry.value)
             )
             conn.commit()
 
@@ -77,30 +119,46 @@ class MetricDB:
     def query_metric_entry(
         self,
         key: str,
-        start_time: Time,
-        end_time: Time
+        test: TestId = None,
+        dut: Union[DutId, Set[DutId]] = None,
+        start_time: Time = None,
+        end_time: Time = None,
     ) -> List[MetricEntry]:
-        start_time = start_time.isoformat()
-        end_time = end_time.isoformat()
+        if dut is None:
+            dut = set()
 
+        conditions = []
+        params = []
+
+        conditions.append("key GLOB ?")
+        params.append(key)
+
+        if not test is None:
+            conditions.append("test = ?")
+            params.append(str(test))
+        
+        for _d in _dut2strset(dut):
+            conditions.append("dut LIKE ? ESCAPE '\\'")
+            params.append(f"%{_d}%")
+        
+        if not start_time is None:
+            conditions.append("datetime(time, '+' || duration || ' seconds') >= ?")
+            params.append(start_time.isoformat())
+        
+        if not end_time is None:
+            conditions.append("time <= ?")
+            params.append(end_time.isoformat())
+        
+        query = f"""
+            SELECT time, duration, value 
+            FROM metric_entry 
+            WHERE {' AND '.join(conditions)}
+            ORDER BY time
+        """
+        
         with sqlite3.connect(self.filename) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT key, time, duration, value 
-                FROM metric_entry 
-                WHERE key GLOB ? 
-                AND datetime(time, '+' || duration || ' seconds') >= ? 
-                AND time <= ? 
-                ORDER BY time
-                """,
-                (key, start_time, end_time)
-            )
-            return [
-                MetricEntry(
-                    datetime.fromisoformat(row["time"]),
-                    row["duration"],
-                    row["value"]
-                ) for row in cursor.fetchall()
-            ]
+            cursor.execute(query, params)
+            return [MetricEntry(*row) for row in cursor.fetchall()]
 
