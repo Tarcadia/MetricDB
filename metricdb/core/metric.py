@@ -4,49 +4,32 @@
 
 from dataclasses import dataclass, field
 from typing import Any, List
-from fnmatch import fnmatch
 
 from .identifier import Identifier, split_identifier
 from .time import Time
 
 
 
-class MetricId(str):
+class MetricKey(str):
 
     SEPARATOR = "::"
 
     def __new__(cls, *keys):
-        _keys = [id for k in keys for id in split_identifier(str(k))]
-        return str.__new__(cls, cls.SEPARATOR.join(_keys))
+        _subkeys = [id for k in keys for id in split_identifier(str(k)) if id]
+        return str.__new__(cls, cls.SEPARATOR.join(_subkeys))
     
-    def keys(self) -> List[str]:
+    def subkeys(self) -> List[str]:
         return self.split(self.SEPARATOR)
-
-
-
-class MetricIdPattern(MetricId):
-    def __new__(cls, *keys):
-        if not keys:
-            keys = ["*"]
-        _keys = [id for k in keys for id in split_identifier(str(k), charset=(Identifier.CHARSET + "*"))]
-        return str.__new__(cls, cls.SEPARATOR.join(_keys))
-
-    def match(self, metric_id: MetricId) -> bool:
-        pattern_parts = self.keys()
-        id_parts = metric_id.keys()
-        pattern_path = "/".join(pattern_parts)
-        id_path = "/".join(id_parts)
-        return fnmatch(id_path, pattern_path)
 
 
 @dataclass
 class MetricInfo:
-    id              : MetricId
+    key             : MetricKey
     name            : str                   = ""
     description     : str                   = ""
 
     def __post_init__(self):
-        self.id = MetricId(self.id)
+        self.key = MetricKey(self.key)
         self.name = str(self.name)
         self.description = str(self.description)
 
