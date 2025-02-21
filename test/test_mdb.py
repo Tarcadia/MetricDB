@@ -6,10 +6,10 @@ from pathlib import Path
 from datetime import datetime
 from time import sleep
 
-from metricdb.core.mdb import MetricDB
-from metricdb.core.identifier import TestId, DutId
-from metricdb.core.time import Time
-from metricdb.core.metric import MetricKey, MetricInfo, MetricEntry
+from metricdb.core import Time
+from metricdb.core import TestId, DutId
+from metricdb.core import MetricKey, MetricInfo, MetricEntry
+from metricdb.core import MetricDB
 
 
 

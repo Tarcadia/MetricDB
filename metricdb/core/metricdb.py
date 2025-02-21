@@ -60,19 +60,6 @@ class MetricDB:
             return [MetricInfo(*row) for row in cursor.fetchall()]
 
 
-    def update_metric_info(
-        self,
-        info: MetricInfo
-    ) -> None:
-        with sqlite3.connect(self.filename) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT OR REPLACE INTO metric_info VALUES (?, ?, ?)",
-                (str(info.key), info.name, info.description)
-            )
-            conn.commit()
-
-
     def query_metric_info(
         self,
         key: MetricKey
@@ -90,27 +77,15 @@ class MetricDB:
                 return MetricInfo(key, *_result)
 
 
-    def add_metric_entry(
+    def update_metric_info(
         self,
-        key: MetricKey,
-        entry: MetricEntry,
-        test: TestId = None,
-        dut: Union[DutId, Set[DutId]] = None,
+        info: MetricInfo
     ) -> None:
-        if test is None:
-            test = TestId("")
-        if dut is None:
-            dut = set()
-        
         with sqlite3.connect(self.filename) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT OR IGNORE INTO metric_info (key, name, description) VALUES (?, ?, ?)",
-                (str(key), "", "")
-            )
-            cursor.execute(
-                "INSERT INTO metric_entry (test, dut, key, time, duration, value) VALUES (?, ?, ?, ?, ?, ?)",
-                (str(test), ",".join(_dut2strset(dut)), str(key), int(entry.time), entry.duration, entry.value)
+                "INSERT OR REPLACE INTO metric_info VALUES (?, ?, ?)",
+                (str(info.key), info.name, info.description)
             )
             conn.commit()
 
@@ -160,4 +135,29 @@ class MetricDB:
             cursor = conn.cursor()
             cursor.execute(query, params)
             return [MetricEntry(*row) for row in cursor.fetchall()]
+
+
+    def add_metric_entry(
+        self,
+        key: MetricKey,
+        entry: MetricEntry,
+        test: TestId = None,
+        dut: Union[DutId, Set[DutId]] = None,
+    ) -> None:
+        if test is None:
+            test = TestId("")
+        if dut is None:
+            dut = set()
+        
+        with sqlite3.connect(self.filename) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR IGNORE INTO metric_info (key, name, description) VALUES (?, ?, ?)",
+                (str(key), "", "")
+            )
+            cursor.execute(
+                "INSERT INTO metric_entry (test, dut, key, time, duration, value) VALUES (?, ?, ?, ?, ?, ?)",
+                (str(test), ",".join(_dut2strset(dut)), str(key), int(entry.time), entry.duration, entry.value)
+            )
+            conn.commit()
 
