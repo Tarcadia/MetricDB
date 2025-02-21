@@ -3,7 +3,6 @@
 import sqlite3
 from pathlib import Path
 from typing import List, Set, Union
-from datetime import datetime
 
 from .identifier import TestId, DutId
 from .time import Time
@@ -44,7 +43,7 @@ class MetricDB:
                     test TEXT,
                     dut TEXT,
                     key TEXT,
-                    time DATETIME,
+                    time INTEGER,
                     duration REAL,
                     value BLOB
                 )
@@ -111,7 +110,7 @@ class MetricDB:
             )
             cursor.execute(
                 "INSERT INTO metric_entry (test, dut, key, time, duration, value) VALUES (?, ?, ?, ?, ?, ?)",
-                (str(test), ",".join(_dut2strset(dut)), str(key), entry.time.isoformat(), entry.duration, entry.value)
+                (str(test), ",".join(_dut2strset(dut)), str(key), int(entry.time), entry.duration, entry.value)
             )
             conn.commit()
 
@@ -142,12 +141,12 @@ class MetricDB:
             params.append(f"%{_d.replace("_", "\\_")}%")
         
         if not start_time is None:
-            conditions.append("datetime(time, '+' || duration || ' seconds') >= datetime(?)")
-            params.append(start_time.isoformat())
+            conditions.append("time + duration >= ?")
+            params.append(int(start_time))
         
         if not end_time is None:
-            conditions.append("datetime(time) <= datetime(?)")
-            params.append(end_time.isoformat())
+            conditions.append("time <= ?")
+            params.append(int(end_time))
         
         query = f"""
             SELECT time, duration, value 
