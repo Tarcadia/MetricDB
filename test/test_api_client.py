@@ -11,18 +11,17 @@ from metricdb.core import TestId, DutId
 from metricdb.core import MetricKey, MetricInfo, MetricEntry
 from metricdb.core import MetricDB
 
+from metricdb.api import MdbAPI
+from metricdb.client import MdbClient
 
 
-PATH_TEST_MDB_DB = Path("test_mdb.db")
-if PATH_TEST_MDB_DB.exists():
-    PATH_TEST_MDB_DB.unlink()
 
-mdb = MetricDB(PATH_TEST_MDB_DB)
-
+URI = "http://localhost:8000/api/v1"
+mdb = MdbClient(URI)
 
 
 def test_metric_info():
-    key = MetricKey("test::mdb::metric::info")
+    key = MetricKey("test::api::metric::info")
     info = MetricInfo(key, "Test Metric", "A test metric")
     mdb.update_metric_info(info)
 
@@ -32,7 +31,7 @@ def test_metric_info():
 
 
 def test_metric_entry():
-    key = MetricKey("test::mdb::metric")
+    key = MetricKey("test::api::metric")
     test = TestId("test_metric_entry")
     dut1 = DutId("dut1")
     dut2 = DutId("dut2")
