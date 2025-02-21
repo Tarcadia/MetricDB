@@ -1,0 +1,12 @@
+
+pydantic
+
+tzlocal
+
+httpx
+websockets
+pydantic
+uvicorn
+fastapi
+
+click
