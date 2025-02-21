@@ -44,7 +44,7 @@ class MetricDB:
                     dut TEXT,
                     key TEXT,
                     time INTEGER,
-                    duration REAL,
+                    duration INTEGER,
                     value BLOB
                 )
             """)
@@ -157,7 +157,7 @@ class MetricDB:
             )
             cursor.execute(
                 "INSERT INTO metric_entry (test, dut, key, time, duration, value) VALUES (?, ?, ?, ?, ?, ?)",
-                (str(test), ",".join(_dut2strset(dut)), str(key), int(entry.time), entry.duration, entry.value)
+                (str(test), ",".join(_dut2strset(dut)), str(key), int(entry.time), int(entry.duration), entry.value)
             )
             conn.commit()
 

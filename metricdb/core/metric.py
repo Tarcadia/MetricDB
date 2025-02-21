@@ -37,12 +37,12 @@ class MetricInfo:
 @dataclass
 class MetricEntry:
     time            : Time                  = field(default_factory=Time)
-    duration        : float                 = 0.0
+    duration        : int                   = 0.0
     value           : Any                   = None
 
     def __post_init__(self):
         self.time = Time(self.time)
         if self.duration < 0:
             raise ValueError(f"Negative duration: {self.duration}")
-        self.duration = float(self.duration)
+        self.duration = int(self.duration)
 
