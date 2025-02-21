@@ -2,36 +2,48 @@
 # -*- coding: UTF-8 -*-
 
 from datetime import datetime
+from datetime import timedelta
+
+from tzlocal import get_localzone
 
 
 
 class Time(datetime):
-    def __new__(cls, time: bytes | datetime | str | int | None = None):
-        if isinstance(time, Time):
+
+    UNIT_RATE = 1_000_000
+
+    def __new__(cls, *t):
+        if len(t) == 0:
+            dt = datetime.now()
+        elif len(t) > 1:
+            dt = datetime(*t)
+        elif isinstance(time:=t[0], Time):
             return time
-        if isinstance(time, datetime):
+        elif t[0] is None:
+            dt = datetime.now()
+        elif isinstance(time:=t[0], datetime):
             dt = time
-        elif isinstance(time, bytes):
-            dt = datetime(time)
-        elif isinstance(time, int):
-            dt = datetime.fromtimestamp(time)
-        elif isinstance(time, str):
-            lower_time = time.lower()
-            if lower_time == "min":
+        elif isinstance(time:=t[0], timedelta):
+            dt = datetime.now() + time
+        elif isinstance(time:=t[0], (int, float)):
+            dt = datetime.fromtimestamp(time / cls.UNIT_RATE)
+        elif isinstance(time:=t[0], str):
+            if time.lower() == "min":
                 dt = datetime.min
-            elif lower_time == "max":
+            elif time.lower() == "max":
                 dt = datetime.max
-            elif lower_time == "now":
+            elif time.lower() == "now":
                 dt = datetime.now()
             else:
                 try:
                     dt = datetime.fromisoformat(time)
                 except ValueError:
                     raise ValueError(f"Invalid ISO8601 format: {time}")
-        elif time is None:
-            dt = datetime.now()
         else:
-            raise ValueError(f"Invalid time: {time}")
+            raise ValueError(f"Invalid time: {t[0]}")
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=get_localzone())
 
         return super().__new__(
             cls,
@@ -40,10 +52,16 @@ class Time(datetime):
             dt.tzinfo
         )
 
+    def __int__(self):
+        return int(self.timestamp() * self.UNIT_RATE)
+
+    def __float__(self):
+        return float(self.timestamp() * self.UNIT_RATE)
+
     def __str__(self):
-        if self == datetime.min:
+        if self == Time.min:
             return "min"
-        elif self == datetime.max:
+        elif self == Time.max:
             return "max"
         return self.isoformat()
 
