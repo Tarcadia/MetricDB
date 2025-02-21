@@ -12,7 +12,7 @@ from .time import Time
 
 class MetricKey(str):
 
-    SEPARATOR = "::"
+    SEPARATOR = "."
 
     def __new__(cls, *keys):
         _subkeys = [id for k in keys for id in split_identifier(str(k)) if id]
