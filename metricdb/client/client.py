@@ -61,7 +61,7 @@ class MdbClient(_MdbClient):
         self,
         key: str,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
         start_time: Optional[Time] = None,
         end_time: Optional[Time] = None
     ) -> List[MetricEntry]:
@@ -73,7 +73,7 @@ class MdbClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None
+        dut: Optional[Union[DutId, Set[DutId]]] = None
     ) -> MetricEntry:
         return self.impl.add_metric_entry(key, entry, test, dut)
 
@@ -83,7 +83,7 @@ class MdbClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None
+        dut: Optional[Union[DutId, Set[DutId]]] = None
     ) -> MetricEntry:
         return await self.impl.async_add_metric_entry(key, entry, test, dut)
 
@@ -107,7 +107,7 @@ class MdbClient(_MdbClient):
         key: MetricKey,
         entries: Iterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None
+        dut: Optional[Union[DutId, Set[DutId]]] = None
     ) -> List[MetricEntry]:
         return self.impl.batch_add_metric_entry(key, entries, test, dut)
 
@@ -117,7 +117,7 @@ class MdbClient(_MdbClient):
         key: MetricKey,
         entries: AsyncIterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None
+        dut: Optional[Union[DutId, Set[DutId]]] = None
     ) -> List[MetricEntry]:
         return await self.impl.abatch_add_metric_entry(key, entries, test, dut)
 

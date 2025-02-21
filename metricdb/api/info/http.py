@@ -15,43 +15,36 @@ def MetricInfoHttpRouter(mdb: MetricDB) -> APIRouter:
     router = APIRouter()
 
 
-    @router.get("/metric/infos", response_model=List[MetricInfoResp])
-    def list_metric_info() -> List[MetricInfoResp]:
+    @router.get("/metric/infos")
+    def list_metric_info(
+    ) -> List[MetricInfoResp]:
         response = [
-            MetricInfoResp.fromcore(metric_info)
-            for metric_info in mdb.list_metric_info()
+            MetricInfoResp.fromcore(info)
+            for info in mdb.list_metric_info()
         ]
         return response
 
 
-    @router.get("/metric/info", response_model=MetricInfoResp)
-    def query_metric_info(key: str) -> MetricInfoResp:
+    @router.get("/metric/info")
+    @router.get("/metric/info/{key}")
+    def query_metric_info(
+        key: str
+    ) -> MetricInfoResp:
         key = MetricKey(key)
         response = MetricInfoResp.fromcore(mdb.query_metric_info(key))
         return response
 
 
-    @router.get("/metric/info/{key}", response_model=MetricInfoResp)
-    def query_metric_info(key: str) -> MetricInfoResp:
+    @router.post("/metric/info")
+    @router.post("/metric/info/{key}")
+    def update_metric_info(
+        key: str,
+        request: MetricInfoUpdate
+    ) -> MetricInfoResp:
         key = MetricKey(key)
-        response = MetricInfoResp.fromcore(mdb.query_metric_info(key))
-        return response
-
-
-    @router.post("/metric/info", response_model=MetricInfoResp)
-    def update_metric_info(request: KeyMetricInfoUpdate):
-        metric_info = request.tocore()
-        mdb.update_metric_info(metric_info)
-        response = MetricInfoResp.fromcore(metric_info)
-        return response
-
-
-    @router.post("/metric/info/{key}", response_model=MetricInfoResp)
-    def update_metric_info(key: str, request: MetricInfoUpdate):
-        key = MetricKey(key)
-        metric_info = request.tocore(key=key)
-        mdb.update_metric_info(metric_info)
-        response = MetricInfoResp.fromcore(metric_info)
+        info = request.tocore(key=key)
+        mdb.update_metric_info(info)
+        response = MetricInfoResp.fromcore(info)
         return response
 
 

@@ -15,28 +15,17 @@ def MetricInfoWsRouter(mdb: MetricDB) -> APIRouter:
 
 
     @router.websocket("/metric/info")
-    async def update_metric_info(websocket: WebSocket):
+    async def update_metric_info(websocket: WebSocket) -> None:
         await websocket.accept()
         try:
             while True:
                 request = KeyMetricInfoUpdate(**await websocket.receive_json())
-                metric_info = request.tocore()
-                mdb.update_metric_info(metric_info)
-        except WebSocketDisconnect:
-            pass
-
-
-    @router.websocket("/metric/info/{key}")
-    async def update_metric_info(websocket: WebSocket, key: str):
-        key = MetricKey(key)
-        await websocket.accept()
-        try:
-            while True:
-                request = MetricInfoUpdate(**await websocket.receive_json())
-                metric_info = request.tocore(key=key)
-                mdb.update_metric_info(metric_info)
+                info = request.tocore()
+                mdb.update_metric_info(info)
         except WebSocketDisconnect:
             pass
 
 
     return router
+
+

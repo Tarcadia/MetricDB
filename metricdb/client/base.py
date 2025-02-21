@@ -17,6 +17,73 @@ from ..core import MetricDB
 
 
 
+def _no_none(d: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        k: _no_none(v)
+        if isinstance(v, dict)
+        else v
+        for k, v in d.items()
+        if v is not None
+    }
+
+
+def Query(
+    key: MetricKey,
+    test: Optional[TestId] = None,
+    dut: Optional[Union[DutId, Set[DutId]]] = None,
+    start_time: Optional[Time] = None,
+    end_time: Optional[Time] = None,
+) -> Dict[str, Any]:
+    return _no_none({
+        "key": str(key),
+        "test": test and str(test),
+        "dut": dut and {str(d) for d in dut} if isinstance(dut, set) else str(dut),
+        "start_time": start_time and int(start_time),
+        "end_time": end_time and int(end_time),
+    })
+
+
+def MetricInfoUpdate(info: MetricInfo) -> Dict[str, Any]:
+    return {
+        "name": str(info.name),
+        "description": str(info.description),
+    }
+
+
+def KeyMetricInfoUpdate(info: MetricInfo) -> Dict[str, Any]:
+    return {
+        "key": str(info.key),
+        "name": str(info.name),
+        "description": str(info.description),
+    }
+
+
+def MetricEntryAdd(entry: MetricEntry) -> Dict[str, Any]:
+    return {
+        "time": int(entry.time),
+        "duration": int(entry.duration),
+        "value": entry.value,
+    }
+
+
+def KeyTestDutMetricEntryAdd(
+    key: MetricKey,
+    entry: MetricEntry,
+    test: Optional[TestId] = None,
+    dut: Optional[Union[DutId, Set[DutId]]] = None,
+) -> Dict[str, Any]:
+    return {
+        "key": str(key),
+        "test": test and str(test),
+        "dut": dut and {str(d) for d in dut} if isinstance(dut, set) else str(dut),
+        "entry": {
+            "time": int(entry.time),
+            "duration": int(entry.duration),
+            "value": entry.value,
+        },
+    }
+
+
 class _MdbClient(ABC):
 
 
@@ -60,7 +127,7 @@ class _MdbClient(ABC):
         self,
         key: str,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
         start_time: Optional[Time] = None,
         end_time: Optional[Time] = None,
     ) -> List[MetricEntry]:
@@ -74,7 +141,7 @@ class _MdbClient(ABC):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         """Add metric entry."""
         pass
@@ -86,7 +153,7 @@ class _MdbClient(ABC):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         """Async add metric entry."""
         pass
@@ -113,7 +180,7 @@ class _MdbClient(ABC):
         key: MetricKey,
         entry: Iterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> List[MetricEntry]:
         """Batch add metric entry."""
         return [self.add_metric_entry(key, i, test, dut) for i in entry]
@@ -124,7 +191,7 @@ class _MdbClient(ABC):
         key: MetricKey,
         entry: AsyncIterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> List[MetricEntry]:
         """Async batch add metric entry."""
         return [await self.async_add_metric_entry(key, i, test, dut) for i in entry]

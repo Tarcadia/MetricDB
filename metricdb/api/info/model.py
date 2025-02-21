@@ -22,6 +22,8 @@ class MetricInfoUpdate(BaseModel, _CoreMixin(MetricInfo)):
     description     : str
 
 
-class KeyMetricInfoUpdate(KeyRequest, MetricInfoUpdate, BaseModel, _CoreMixin(MetricInfo)):
-    pass
+class KeyMetricInfoUpdate(BaseModel, _CoreMixin(MetricInfo)):
+    key             : str
+    name            : str
+    description     : str
 

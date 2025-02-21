@@ -13,37 +13,22 @@ from ..base import _CoreMixin
 
 
 
-class Entry(BaseModel, _CoreMixin(MetricEntry)):
-    time            : float
-    duration        : float                 = 0.0
-    value           : Optional[Union[str, int, float, Dict]] = None
+class MetricEntryResp(BaseModel, _CoreMixin(MetricEntry)):
+    time            : int
+    duration        : int
+    value           : Union[str, int, float]
 
 
-class MetricEntryResp(Entry, BaseModel, _CoreMixin(MetricEntry)):
-    pass
+class MetricEntryAdd(BaseModel, _CoreMixin(MetricEntry)):
+    time            : int
+    duration        : Optional[int]         = 0.0
+    value           : Optional[Union[str, int, float]] = None
 
 
-class MetricEntryQuery(DutRequest, TimeRequest, BaseModel):
-    pass
-
-
-class TestMetricEntryQuery(TestRequest, MetricEntryQuery, BaseModel):
-    pass
-
-
-class TestKeyMetricEntryQuery(TestRequest, KeyRequest, MetricEntryQuery, BaseModel):
-    pass
-
-
-class MetricEntryAdd(DutRequest, BaseModel):
-    entry: Entry
-
-
-class TestMetricEntryAdd(TestRequest, MetricEntryAdd, BaseModel):
-    pass
-
-
-class TestKeyMetricEntryAdd(TestRequest, KeyRequest, MetricEntryAdd, BaseModel):
-    pass
+class KeyTestDutMetricEntryAdd(BaseModel):
+    key             : str
+    test            : Optional[str]         = None
+    dut             : Optional[Set[str]]    = None
+    entry           : MetricEntryAdd
 
 

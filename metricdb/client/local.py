@@ -47,7 +47,7 @@ class MdbLocalClient(_MdbClient):
         self,
         key: str,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
         start_time: Optional[Time] = None,
         end_time: Optional[Time] = None,
     ) -> List[MetricEntry]:
@@ -59,7 +59,7 @@ class MdbLocalClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         self.mdb.add_metric_entry(key, entry, test, dut)
         return entry
@@ -70,7 +70,7 @@ class MdbLocalClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         self.mdb.add_metric_entry(key, entry, test, dut)
         return entry

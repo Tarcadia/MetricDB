@@ -30,19 +30,3 @@ def _CoreMixin(cls):
     return _CoreMixin
 
 
-class KeyRequest(BaseModel):
-    key             : str
-
-
-class TestRequest(BaseModel):
-    test            : Optional[str]         = None
-
-
-class DutRequest(BaseModel):
-    dut             : Optional[Set[str]]    = None
-
-
-class TimeRequest(BaseModel):
-    start_time      : Optional[float]       = None
-    end_time        : Optional[float]       = None
-

@@ -13,65 +13,9 @@ from .base import _MdbClient
 
 
 
-def _no_none(d: Dict[str, Any]) -> Dict[str, Any]:
-    return {
-        k: _no_none(v)
-        if isinstance(v, dict)
-        else v
-        for k, v in d.items()
-        if v is not None
-    }
-
 async def _aiterator(iterable: Iterator) -> AsyncIterator:
     for item in iterable:
         yield item
-
-
-def MetricInfoQuerty(key: str) -> Dict[str, Any]:
-    return _no_none({
-        "key": str(key),
-    })
-
-def MetricInfoUpdate(info: MetricInfo) -> Dict[str, Any]:
-    return _no_none({
-        "key": str(info.key),
-        "name": info.name,
-        "description": info.description,
-    })
-
-def MetricEntryQuerty(
-    key: str,
-    test: Optional[TestId] = None,
-    dut: Union[DutId, Set[DutId], None] = None,
-    start_time: Optional[Time] = None,
-    end_time: Optional[Time] = None,
-) -> Dict[str, Any]:
-    return _no_none({
-        "key": str(key),
-        "test": test and str(test),
-        "dut": dut and {DutId(d) for d in dut},
-        "start_time": start_time and float(start_time),
-        "end_time": end_time and float(end_time),
-    })
-
-
-def MetricEntryAdd(
-    key: MetricKey,
-    entry: MetricEntry,
-    test: Optional[TestId] = None,
-    dut: Union[DutId, Set[DutId], None] = None,
-) -> Dict[str, Any]:
-    return _no_none({
-        "key": str(key),
-        "test": test and str(test),
-        "dut": dut and {DutId(d) for d in dut},
-        "entry": {
-            "time": int(entry.time),
-            "duration": int(entry.duration),
-            "value": entry.value,
-        },
-    })
-
 
 
 class MdbRemoteClient(_MdbClient):
@@ -99,10 +43,9 @@ class MdbRemoteClient(_MdbClient):
         self,
         key: MetricKey
     ) -> MetricInfo:
-        key = str(key)
         response = self.http.get(
             "/metric/info",
-            params=MetricInfoQuerty(key),
+            params=Query(key),
         )
         response.raise_for_status()
         return MetricInfo(**response.json())
@@ -114,6 +57,7 @@ class MdbRemoteClient(_MdbClient):
     ) -> MetricInfo:
         response = self.http.post(
             "/metric/info",
+            params=Query(info.key),
             json=MetricInfoUpdate(info),
         )
         response.raise_for_status()
@@ -126,6 +70,7 @@ class MdbRemoteClient(_MdbClient):
     ) -> MetricInfo:
         response = await self.ahttp.post(
             "/metric/info",
+            params=Query(info.key),
             json=MetricInfoUpdate(info),
         )
         response.raise_for_status()
@@ -136,15 +81,13 @@ class MdbRemoteClient(_MdbClient):
         self,
         key: str,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
         start_time: Optional[Time] = None,
         end_time: Optional[Time] = None,
     ) -> List[MetricEntry]:
         response = self.http.get(
             "/metric/entry",
-            params=MetricEntryQuerty(
-                key, test, dut, start_time, end_time
-            ),
+            params=Query(key, test, dut, start_time, end_time),
         )
         response.raise_for_status()
         return [MetricEntry(**item) for item in response.json()]
@@ -155,13 +98,12 @@ class MdbRemoteClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         response = self.http.post(
             "/metric/entry",
-            json=MetricEntryAdd(
-                key, entry, test, dut
-            ),
+            params=Query(key, test, dut),
+            json=MetricEntryAdd(entry),
         )
         response.raise_for_status()
         return MetricEntry(**response.json())
@@ -172,13 +114,12 @@ class MdbRemoteClient(_MdbClient):
         key: MetricKey,
         entry: MetricEntry,
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> MetricEntry:
         response = await self.async_http.post(
             "/metric/entry",
-            json=MetricEntryAdd(
-                key, entry, test, dut
-            ),
+            params=Query(key, test, dut),
+            json=MetricEntryAdd(entry),
         )
         response.raise_for_status()
         return MetricEntry(**response.json())
@@ -200,7 +141,7 @@ class MdbRemoteClient(_MdbClient):
         response = []
         async with websockets.connect(self.base_ws_url + "/metric/info") as conn:
             async for info in infos:
-                request = MetricInfoUpdate(info)
+                request = KeyMetricInfoUpdate(info)
                 await conn.send(json.dumps(request))
                 response.append(info)
         return response
@@ -211,7 +152,7 @@ class MdbRemoteClient(_MdbClient):
         key: MetricKey,
         entries: Iterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> List[MetricEntry]:
         return asyncio.run(
             self.abatch_add_metric_entry(key, _aiterator(entries), test, dut)
@@ -223,12 +164,12 @@ class MdbRemoteClient(_MdbClient):
         key: MetricKey,
         entries: AsyncIterator[MetricEntry],
         test: Optional[TestId] = None,
-        dut: Union[DutId, Set[DutId], None] = None,
+        dut: Optional[Union[DutId, Set[DutId]]] = None,
     ) -> List[MetricEntry]:
         response = []
-        async with websockets.connect(self.base_ws_url + "/metric/entry") as conn:
+        async with websockets.connect(self.base_ws_url + f"/metric/entry") as conn:
             async for entry in entries:
-                request = MetricEntryAdd(key, entry, test, dut)
+                request = KeyTestDutMetricEntryAdd(key, entry, test, dut)
                 await conn.send(json.dumps(request))
                 response.append(entry)
         return response
