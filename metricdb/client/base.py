@@ -37,7 +37,7 @@ def Query(
     return _no_none({
         "key": str(key),
         "test": test and str(test),
-        "dut": dut and {str(d) for d in dut} if isinstance(dut, set) else str(dut),
+        "dut": dut and ({str(d) for d in dut} if isinstance(dut, set) else str(dut)),
         "start_time": start_time and int(start_time),
         "end_time": end_time and int(end_time),
     })
@@ -75,7 +75,7 @@ def KeyTestDutMetricEntryAdd(
     return {
         "key": str(key),
         "test": test and str(test),
-        "dut": dut and {str(d) for d in dut} if isinstance(dut, set) else str(dut),
+        "dut": dut and ({str(d) for d in dut} if isinstance(dut, set) else str(dut)),
         "entry": {
             "time": int(entry.time),
             "duration": int(entry.duration),
