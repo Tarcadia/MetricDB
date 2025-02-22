@@ -4,8 +4,8 @@
 
 from ..core import MetricDB
 
-from .base import *
-from .base import _MdbClient
+from ._client import _MdbClient
+from .model import *
 
 
 class MdbLocalClient(_MdbClient):
@@ -22,14 +22,14 @@ class MdbLocalClient(_MdbClient):
 
     def query_metric_info(
         self,
-        key: MetricKey
+        key         : MetricKey
     ) -> MetricInfo:
         return self.mdb.query_metric_info(key)
 
 
     def update_metric_info(
         self,
-        info: MetricInfo
+        info        : MetricInfo
     ) -> MetricInfo:
         self.mdb.update_metric_info(info)
         return info
@@ -37,7 +37,7 @@ class MdbLocalClient(_MdbClient):
 
     async def async_update_metric_info(
         self,
-        info: MetricInfo
+        info        : MetricInfo
     ) -> MetricInfo:
         self.mdb.update_metric_info(info)
         return info
@@ -45,21 +45,21 @@ class MdbLocalClient(_MdbClient):
 
     def query_metric_entry(
         self,
-        key: str,
-        test: Optional[TestId] = None,
-        dut: Optional[Union[DutId, Set[DutId]]] = None,
-        start_time: Optional[Time] = None,
-        end_time: Optional[Time] = None,
+        key         : str,
+        test        : ITest                 = None,
+        dut         : IDut                  = None,
+        start_time  : ITime                 = None,
+        end_time    : ITime                 = None,
     ) -> List[MetricEntry]:
         return self.mdb.query_metric_entry(key, test, dut, start_time, end_time)
 
 
     def add_metric_entry(
         self,
-        key: MetricKey,
-        entry: MetricEntry,
-        test: Optional[TestId] = None,
-        dut: Optional[Union[DutId, Set[DutId]]] = None,
+        key         : MetricKey,
+        entry       : MetricEntry,
+        test        : ITest                 = None,
+        dut         : IDut                  = None,
     ) -> MetricEntry:
         self.mdb.add_metric_entry(key, entry, test, dut)
         return entry
@@ -67,10 +67,10 @@ class MdbLocalClient(_MdbClient):
 
     async def async_add_metric_entry(
         self,
-        key: MetricKey,
-        entry: MetricEntry,
-        test: Optional[TestId] = None,
-        dut: Optional[Union[DutId, Set[DutId]]] = None,
+        key         : MetricKey,
+        entry       : MetricEntry,
+        test        : ITest                 = None,
+        dut         : IDut                  = None,
     ) -> MetricEntry:
         self.mdb.add_metric_entry(key, entry, test, dut)
         return entry
