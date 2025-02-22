@@ -1,11 +1,12 @@
+
 # -*- coding: UTF-8 -*-
 
 import sqlite3
 from pathlib import Path
 from typing import List, Set, Union
 
-from .identifier import TestId, DutId
 from .time import Time
+from .identifier import TestId, DutId
 from .metric import MetricKey, MetricInfo, MetricEntry
 
 

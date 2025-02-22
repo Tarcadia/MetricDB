@@ -2,14 +2,16 @@
 # -*- coding: UTF-8 -*-
 
 
+from . import typing
+
 from .time import Time
 from .identifier import Identifier, TestId, DutId
+from .identifier import split_identifier, is_identifier
 from .metric import MetricKey, MetricInfo, MetricEntry
 from .metricdb import MetricDB
 
-from .identifier import split_identifier, is_identifier
-
 __all__ = [
+    "typing",
     "Time",
     "Identifier",
     "TestId",
