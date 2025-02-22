@@ -5,7 +5,7 @@
 from fastapi import APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
 
-from .model import *
+from ..model import *
 
 
 
@@ -19,9 +19,11 @@ def MetricInfoWsRouter(mdb: MetricDB) -> APIRouter:
         await websocket.accept()
         try:
             while True:
-                request = KeyMetricInfoUpdate(**await websocket.receive_json())
+                request = KeyMetricInfoUpdateRequest(**await websocket.receive_json())
                 info = request.tocore()
-                mdb.update_metric_info(info)
+                mdb.update_metric_info(
+                    info    = info,
+                )
         except WebSocketDisconnect:
             pass
 
