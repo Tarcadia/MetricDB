@@ -3,6 +3,7 @@
 
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 
 from tzlocal import get_localzone
 
@@ -19,26 +20,27 @@ class Time(datetime):
             dt = datetime(*t)
         elif isinstance(time:=t[0], Time):
             return time
-        elif t[0] is None:
+        elif time:=t[0] is None:
             dt = datetime.now()
         elif isinstance(time:=t[0], datetime):
             dt = time
         elif isinstance(time:=t[0], timedelta):
             dt = datetime.now() + time
         elif isinstance(time:=t[0], (int, float)):
-            dt = datetime.fromtimestamp(time / cls.UNIT_RATE)
+            dt = datetime.fromtimestamp(time / cls.UNIT_RATE, tz=timezone.utc)
+        elif isinstance(time:=t[0], str) and time.lower() == "min":
+            dt = datetime.min
+        elif isinstance(time:=t[0], str) and time.lower() == "max":
+            dt = datetime.max
+        elif isinstance(time:=t[0], str) and time.lower() == "now":
+            dt = datetime.now()
+        elif isinstance(time:=t[0], str) and time.isdecimal():
+            dt = datetime.fromtimestamp(int(time) / cls.UNIT_RATE, tz=timezone.utc)
         elif isinstance(time:=t[0], str):
-            if time.lower() == "min":
-                dt = datetime.min
-            elif time.lower() == "max":
-                dt = datetime.max
-            elif time.lower() == "now":
-                dt = datetime.now()
-            else:
-                try:
-                    dt = datetime.fromisoformat(time)
-                except ValueError:
-                    raise ValueError(f"Invalid ISO8601 format: {time}")
+            try:
+                dt = datetime.fromisoformat(time)
+            except ValueError:
+                raise ValueError(f"Invalid ISO8601 format: {time}")
         else:
             raise ValueError(f"Invalid time: {t[0]}")
 
